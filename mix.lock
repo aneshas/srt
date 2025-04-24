@@ -1,0 +1,4 @@
+%{
+  "html_sanitize_ex": {:hex, :html_sanitize_ex, "1.4.3", "67b3d9fa8691b727317e0cc96b9b3093be00ee45419ffb221cdeee88e75d1360", [:mix], [{:mochiweb, "~> 2.15 or ~> 3.1", [hex: :mochiweb, repo: "hexpm", optional: false]}], "hexpm", "87748d3c4afe949c7c6eb7150c958c2bcba43fc5b2a02686af30e636b74bccb7"},
+  "mochiweb": {:hex, :mochiweb, "3.2.2", "bb435384b3b9fd1f92f2f3fe652ea644432877a3e8a81ed6459ce951e0482ad3", [:rebar3], [], "hexpm", "4114e51f1b44c270b3242d91294fe174ce1ed989100e8b65a1fab58e0cba41d5"},
+}
