@@ -5,12 +5,18 @@ defmodule Srt do
 
   alias HtmlSanitizeEx.Scrubber
 
-  @positions_regex ~r/{\\an(?<pos>\d+)}/
-
   @type opts :: [
           strip_tags: boolean()
         ]
 
+  @doc """
+  Decode SRT subtitles.
+
+  ## Options
+
+  - `:strip_tags` - Strip HTML tags from the text. Original tags are preserved
+  and stripped text is returned in `text_stripped`.
+  """
   @spec decode(String.t(), opts()) :: [Srt.Subtitle.t() | {:error, String.t()}]
   def decode(data, opts \\ []) do
     lines(data)
@@ -32,10 +38,9 @@ defmodule Srt do
 
   # TODO:
   # handle file format and different line breaks - assume utf-8 ?: https://github.com/san650/subtitle/blob/master/lib/subtitle/sub_rip/parser.ex
-  # - error on duplicate index
-  # ignore unofficially, text coordinates can be specified at the end of the timestamp line as X1:… X2:… Y1:… Y2:…
-  # https://forum.doom9.org/archive/index.php/t-86664.html
+  # fix keywordlist opts
   # add example tests
+  # docs
 
   defp decode_subtitle(data, opts) do
     try do
@@ -51,9 +56,7 @@ defmodule Srt do
       data
       |> String.split("\n")
 
-    [from, to] =
-      String.replace(start_end, " ", "")
-      |> String.split("-->")
+    [from, _, to | _] = String.split(start_end, " ")
 
     from = String.replace(from, ",", ".")
     to = String.replace(to, ",", ".")
@@ -71,6 +74,8 @@ defmodule Srt do
        text_positions: positions
      }}
   end
+
+  @positions_regex ~r/{\\an(?<pos>\d+)}/
 
   defp parse_positions(lines) do
     positions =

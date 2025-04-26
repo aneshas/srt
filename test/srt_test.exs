@@ -139,6 +139,26 @@ defmodule SrtTest do
            ]
   end
 
+  test "decode ignore coords" do
+    subtitles =
+      """
+      1
+      00:00:33,920 --> 00:00:37,360 X1:100 Y1:100 X2:200 Y2:200
+      Foo
+      """
+      |> decode()
+
+    assert subtitles == [
+             ok: %Srt.Subtitle{
+               index: 1,
+               start: ~T[00:00:33.920],
+               end: ~T[00:00:37.360],
+               text: ["Foo"],
+               text_positions: [0]
+             }
+           ]
+  end
+
   test "decode with error" do
     subtitles =
       """
@@ -170,10 +190,7 @@ defmodule SrtTest do
       |> Path.join("secrets.srt")
       |> File.read!()
       |> decode([:strip_tags])
-      |> Enum.reverse()
 
-    # TODO
-    # assert no errors
     IO.inspect(subtitles)
   end
 end
