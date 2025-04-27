@@ -1,6 +1,5 @@
 defmodule SrtTest do
   use ExUnit.Case
-  doctest Srt
 
   import Srt, only: [decode: 1, decode: 2, decode!: 1]
 
@@ -53,7 +52,7 @@ defmodule SrtTest do
       <i>were home to our distant ancestors.</i>
       {\\an2}<i>were home to our distant ancestors.</i>
       """
-      |> decode([:strip_tags])
+      |> decode(strip_tags: true)
 
     assert subtitles == [
              ok: %Srt.Subtitle{
@@ -119,7 +118,7 @@ defmodule SrtTest do
       {i}Long{/i} {u}ago,{/u} {b}the plains{/b}
       {I}Long{/I} {U}ago,{/U} {B}the plains{/B}
       """
-      |> decode([:strip_tags])
+      |> decode(strip_tags: true)
 
     assert subtitles == [
              ok: %Srt.Subtitle{
@@ -167,7 +166,7 @@ defmodule SrtTest do
       {i}Long{/i} {u}ago,{/u} {b}the plains{/b}
       {I}Long{/I} {U}ago,{/U} {B}the plains{/B}
       """
-      |> decode([:strip_tags])
+      |> decode(strip_tags: true)
 
     assert subtitles == [error: "cannot parse \"00:0037.360Z\" as time, reason: :invalid_format"]
   end
@@ -189,7 +188,7 @@ defmodule SrtTest do
       @file_path
       |> Path.join("secrets.srt")
       |> File.read!()
-      |> decode([:strip_tags])
+      |> decode(strip_tags: true)
 
     IO.inspect(subtitles)
   end

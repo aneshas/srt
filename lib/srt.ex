@@ -1,29 +1,76 @@
 defmodule Srt do
   @moduledoc """
-  Documentation for `Srt`.
+  Decode SRT subtitles.
   """
 
   alias HtmlSanitizeEx.Scrubber
 
-  @type opts :: [
-          strip_tags: boolean()
-        ]
+  @type opts :: {:strip_tags, boolean()}
 
   @doc """
-  Decode SRT subtitles.
+  Decode SRT subtitles and optionally strip HTML tags.
+  Invalid html tags are preserved always stripped.
+
+  {\\an1} caption position is parsed and returned in `text_positions` field as a list of integers (default is 0).
+
+  This coord format is not supported:
+  00:00:33,920 --> 00:00:37,360 X1:100 Y1:100 X2:200 Y2:200
+
+  Any parsing errors are returned as {:error, String.t()} for all invalid subtitle entries.
+  If you want to raise an error for invalid subtitles, use `decode!/1`.
 
   ## Options
 
-  - `:strip_tags` - Strip HTML tags from the text. Original tags are preserved
-  and stripped text is returned in `text_stripped`.
+  * `:strip_tags` - When true, strip HTML tags from the text. Original tags are preserved
+  and stripped text is returned in `text_stripped` field.
+
+  ## Examples
+
+  Decode SRT subtitles and parse errors.
+
+      iex> \"\"\"
+      ...> 1
+      ...> 00:00:33,920 --> 00:00:37,360
+      ...> <i>Long ago,
+      ...> the plains of East Africa</i>
+      ...>
+      ...> 2
+      ...> 00:00:37,440 --> 00:00:40,440
+      ...> <i>were home to our distant ancestors.</i>
+      ...>
+      ...> 3
+      ...> 00.00.40,440 --> 00:00:43,440
+      ...> \"\"\"
+      ...> |> Srt.decode()
+      [
+        ok: %Srt.Subtitle{
+          index: 1,
+          start: ~T[00:00:33.920],
+          end: ~T[00:00:37.360],
+          text: ["<i>Long ago,", "the plains of East Africa</i>"],
+          text_positions: [0, 0]
+        },
+        ok: %Srt.Subtitle{
+          index: 2,
+          start: ~T[00:00:37.440],
+          end: ~T[00:00:40.440],
+          text: ["<i>were home to our distant ancestors.</i>"],
+          text_positions: [0]
+        },
+        error: "cannot parse \\"00.00.40.440Z\\" as time, reason: :invalid_format"
+      ]
+
   """
-  @spec decode(String.t(), opts()) :: [Srt.Subtitle.t() | {:error, String.t()}]
+  @spec decode(String.t(), [opts()]) :: [Srt.Subtitle.t() | {:error, String.t()}]
   def decode(data, opts \\ []) do
     lines(data)
     |> Enum.map(&decode_subtitle(&1, opts))
   end
 
-  @spec decode(String.t(), opts()) :: [Srt.Subtitle.t()]
+  @doc """
+  See `decode/2`.
+  """
+  @spec decode!(String.t(), [opts()]) :: [Srt.Subtitle.t()]
   def decode!(data, opts \\ []) do
     lines(data)
     |> Enum.map(&decode_subtitle!(&1, opts))
@@ -35,12 +82,6 @@ defmodule Srt do
     |> String.split("\n\n")
     |> Enum.filter(&(String.trim(&1) != ""))
   end
-
-  # TODO:
-  # handle file format and different line breaks - assume utf-8 ?: https://github.com/san650/subtitle/blob/master/lib/subtitle/sub_rip/parser.ex
-  # fix keywordlist opts
-  # add example tests
-  # docs
 
   defp decode_subtitle(data, opts) do
     try do
@@ -105,10 +146,12 @@ defmodule Srt do
       |> String.trim_trailing("\n")
       |> Scrubber.scrub(Srt.Scrubber)
 
-    {scrubbed |> String.split("\n"), scrubbed |> strip_tags(opts)}
+    strip_tags = opts |> Keyword.get(:strip_tags, false)
+
+    {scrubbed |> String.split("\n"), scrubbed |> strip_tags(strip_tags)}
   end
 
-  defp strip_tags(text, [:strip_tags]) do
+  defp strip_tags(text, true) do
     Regex.replace(
       @positions_regex,
       HtmlSanitizeEx.strip_tags(text),
@@ -117,7 +160,7 @@ defmodule Srt do
     |> String.split("\n")
   end
 
-  defp strip_tags(_text, _opts), do: nil
+  defp strip_tags(_text, false), do: nil
 
   defp clean_line(line) do
     @tags
