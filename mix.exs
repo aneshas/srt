@@ -4,6 +4,8 @@ defmodule Srt.MixProject do
   def project do
     [
       app: :srt,
+      description: "Decode SRT subtitles.",
+      package: package(),
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
@@ -21,7 +23,16 @@ defmodule Srt.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:html_sanitize_ex, "~> 1.4"}
+      {:html_sanitize_ex, "~> 1.4"},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+    ]
+  end
+
+  defp package() do
+    [
+      name: "srt",
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/aneshas/srt"}
     ]
   end
 end
